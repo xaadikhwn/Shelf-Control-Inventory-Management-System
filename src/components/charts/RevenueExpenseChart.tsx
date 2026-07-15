@@ -61,8 +61,8 @@ export default function RevenueExpenseChart({ data }: RevenueExpenseChartProps) 
         padding: 12,
         cornerRadius: 8,
         callbacks: {
-          label: (ctx: { dataset: { label?: string }; parsed: { y: number } }) => {
-            return `${ctx.dataset.label}: £${ctx.parsed.y.toLocaleString()}`;
+          label: (ctx: any) => {
+            return `${ctx.dataset.label}: £${ctx.parsed.y?.toLocaleString() || 0}`;
           },
         },
       },
