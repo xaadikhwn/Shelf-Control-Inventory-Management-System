@@ -26,7 +26,7 @@ const navItems = [
 ];
 
 export default function Sidebar() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { sidebarOpen, setSidebarOpen } = useUI();
   const location = useLocation();
 
@@ -118,6 +118,7 @@ export default function Sidebar() {
           <span>Settings</span>
         </NavLink>
         <button
+          onClick={logout}
           className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-text-secondary hover:bg-navy-700/50 hover:text-text-primary transition-all duration-200 w-full"
           aria-label="Sign out"
         >
