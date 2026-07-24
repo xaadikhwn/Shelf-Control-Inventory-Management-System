@@ -6,15 +6,19 @@ import { AppError } from '../utils/AppError';
 import * as authService from '../services/authService';
 import { sendEmail } from '../utils/email';
 
-const sendTokenResponse = (user: any, statusCode: number, res: Response) => {
+const sendTokenResponse = async (user: any, statusCode: number, res: Response) => {
   const accessToken = generateAccessToken(user._id);
   const refreshToken = generateRefreshToken(user._id);
 
   // Save refresh token to user
   user.refreshTokens.push(refreshToken);
-  user.save({ validateBeforeSave: false });
+  await user.save({ validateBeforeSave: false });
 
-  // Set refresh token in cookie
+  // Convert to object and remove sensitive info from output
+  const userData = user.toObject();
+  userData.password = undefined;
+  userData.refreshTokens = undefined;
+
   res.cookie('refreshToken', refreshToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
@@ -22,21 +26,17 @@ const sendTokenResponse = (user: any, statusCode: number, res: Response) => {
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   });
 
-  // Remove password from output
-  user.password = undefined;
-  user.refreshTokens = undefined;
-
   res.status(statusCode).json({
     success: true,
     token: accessToken,
-    data: user,
+    data: userData,
   });
 };
 
 export const register = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const user = await authService.registerUser(req.body);
-    sendTokenResponse(user, 201, res);
+    await sendTokenResponse(user, 201, res);
   } catch (error) {
     next(error);
   }
@@ -51,7 +51,7 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
       return next(new AppError('Invalid credentials', 401));
     }
 
-    sendTokenResponse(user, 200, res);
+    await sendTokenResponse(user, 200, res);
   } catch (error) {
     next(error);
   }
@@ -101,7 +101,7 @@ export const refreshToken = async (req: Request, res: Response, next: NextFuncti
     }
 
     // Generate new tokens
-    sendTokenResponse(user, 200, res);
+    await sendTokenResponse(user, 200, res);
   } catch (error) {
     next(error);
   }

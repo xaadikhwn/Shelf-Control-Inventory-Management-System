@@ -8,9 +8,11 @@ import RevenueExpenseChart from '../../components/charts/RevenueExpenseChart';
 import SalesByCategoryDonut from '../../components/charts/SalesByCategoryDonut';
 import { mockApi } from '../../services/mockApi';
 import { formatCurrency } from '../../utils';
+import { useAuth } from '../../context/AuthContext';
 import type { DashboardSummary, SalesOrder } from '../../types';
 
 export default function DashboardPage() {
+  const { user } = useAuth();
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [orders, setOrders] = useState<SalesOrder[]>([]);
   const [loading, setLoading] = useState(true);
@@ -86,7 +88,7 @@ export default function DashboardPage() {
     return (
       <div>
         <PageHeader
-          title="Dashboard"
+          title={`Welcome back, ${user?.name?.split(' ')[0] || 'User'}!`}
           subtitle="Overview for December 2024 · FY2024"
         />
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
@@ -104,8 +106,8 @@ export default function DashboardPage() {
   return (
     <div>
       <PageHeader
-        title="Dashboard"
-        subtitle="Overview for December 2024 · FY2024"
+        title={`Welcome back, ${user?.name?.split(' ')[0] || 'User'}!`}
+        subtitle={`Role: ${user?.role || 'Staff'} · Overview for December 2024 · FY2024`}
       />
 
       {/* KPI Cards */}
