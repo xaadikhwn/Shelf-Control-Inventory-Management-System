@@ -7,7 +7,7 @@ const cookieParser = require('cookie-parser');
 const { errorHandler } = require('./middleware/errorHandler');
 
 const app = express();
-const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173,http://127.0.0.1:3000').split(',').map((origin) => origin.trim()).filter(Boolean);
+const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173,http://127.0.0.1:3000,https://shelf-control-inventory-management.vercel.app').split(',').map((origin) => origin.trim()).filter(Boolean);
 
 // Middlewares
 app.use(helmet());
