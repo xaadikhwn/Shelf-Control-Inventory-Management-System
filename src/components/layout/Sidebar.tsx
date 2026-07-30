@@ -1,28 +1,29 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
-  ShoppingCart,
-  Package,
-  Wallet,
-  Receipt,
-  Users,
-  Truck,
-  Settings,
+  ShoppingBag,
+  Boxes,
+  Banknote,
+  FileSpreadsheet,
+  UserCheck,
+  Building2,
+  SlidersHorizontal,
   LogOut,
   ChevronRight,
   X,
+  Briefcase,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useUI } from '../../context/UIContext';
 
 const navItems = [
   { path: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { path: '/sales', label: 'Sales', icon: ShoppingCart },
-  { path: '/inventory', label: 'Inventory', icon: Package },
-  { path: '/payroll', label: 'Payroll', icon: Wallet },
-  { path: '/expenses', label: 'Expenses', icon: Receipt },
-  { path: '/customers', label: 'Customers', icon: Users },
-  { path: '/suppliers', label: 'Suppliers', icon: Truck },
+  { path: '/sales', label: 'Sales', icon: ShoppingBag },
+  { path: '/inventory', label: 'Inventory', icon: Boxes },
+  { path: '/payroll', label: 'Payroll', icon: Banknote },
+  { path: '/expenses', label: 'Expenses', icon: FileSpreadsheet },
+  { path: '/customers', label: 'Customers', icon: UserCheck },
+  { path: '/suppliers', label: 'Suppliers', icon: Building2 },
 ];
 
 export default function Sidebar() {
@@ -41,7 +42,7 @@ export default function Sidebar() {
       <div className="p-4 pb-3">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 bg-gradient-to-br from-accent-blue to-indigo-600 rounded-lg flex items-center justify-center shadow-lg shadow-accent-blue/20">
-            <LayoutDashboard className="w-5 h-5 text-white" />
+            <Briefcase className="w-5 h-5 text-white" />
           </div>
           <div>
             <h1 className="text-sm font-bold text-text-primary">BizManage</h1>
@@ -54,16 +55,16 @@ export default function Sidebar() {
       <div className="px-4 py-3 mx-3 mb-4 bg-navy-700/40 rounded-lg">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-accent-blue/20 rounded-full flex items-center justify-center text-xs font-bold text-accent-blue">
-            {user.initials}
+            {user?.initials || 'US'}
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-text-primary truncate">
-              {user.name}
+              {user?.name || 'User'}
             </p>
             <div className="flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
               <span className="text-[10px] text-accent-blue-light">
-                {user.role}
+                {user?.role || 'Staff'}
               </span>
             </div>
           </div>
@@ -114,7 +115,7 @@ export default function Sidebar() {
               : 'text-text-secondary hover:bg-navy-700/50 hover:text-text-primary'
           }`}
         >
-          <Settings className="w-[18px] h-[18px]" />
+          <SlidersHorizontal className="w-[18px] h-[18px]" />
           <span>Settings</span>
         </NavLink>
         <button
@@ -130,7 +131,7 @@ export default function Sidebar() {
         <p className="px-3 pt-2 text-[9px] font-mono text-text-muted leading-relaxed">
           JWT · Session active · ID:
           <br />
-          {user.studentId}
+          {user?.studentId || 'N/A'}
         </p>
       </div>
     </div>

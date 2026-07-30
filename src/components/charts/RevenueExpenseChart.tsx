@@ -8,6 +8,7 @@ import {
   Legend,
 } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
+import { BarChart3, TrendingUp, TrendingDown } from 'lucide-react';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
@@ -88,15 +89,27 @@ export default function RevenueExpenseChart({ data }: RevenueExpenseChartProps) 
   return (
     <div className="bg-navy-800 border border-navy-500/50 rounded-xl p-5">
       <div className="flex items-center justify-between mb-4">
-        <div>
-          <h3 className="text-sm font-semibold text-text-primary">
-            Revenue vs Expenses
-          </h3>
-          <p className="text-xs text-text-muted">FY 2024 · monthly</p>
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-accent-blue/10 border border-accent-blue/20 flex items-center justify-center text-accent-blue-light">
+            <BarChart3 className="w-4 h-4" />
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold text-text-primary">
+              Revenue vs Expenses
+            </h3>
+            <p className="text-xs text-text-muted">FY 2024 · Monthly Comparison</p>
+          </div>
         </div>
-        <span className="text-[10px] font-mono text-text-muted bg-navy-700 px-2 py-1 rounded">
-          GBP £
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded-md border border-emerald-500/20">
+            <TrendingUp className="w-3 h-3" />
+            Revenue
+          </span>
+          <span className="inline-flex items-center gap-1 text-[10px] font-medium text-rose-400 bg-rose-500/10 px-2 py-1 rounded-md border border-rose-500/20">
+            <TrendingDown className="w-3 h-3" />
+            Expenses
+          </span>
+        </div>
       </div>
       <div className="h-[280px]">
         <Bar data={chartData} options={options} />

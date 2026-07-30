@@ -1,18 +1,32 @@
 import { useState, useEffect } from 'react';
-import { TrendingUp, CreditCard, AlertTriangle, Users } from 'lucide-react';
+import {
+  BadgeDollarSign,
+  Wallet,
+  AlertOctagon,
+  Users,
+  ShoppingBag,
+  User,
+  Calendar,
+  Layers,
+  Activity,
+  CheckCircle2,
+  Clock,
+} from 'lucide-react';
 import PageHeader from '../../components/layout/PageHeader';
 import KpiCard from '../../components/ui/KpiCard';
 import DataTable, { type Column } from '../../components/ui/DataTable';
 import StatusBadge from '../../components/ui/StatusBadge';
 import RevenueExpenseChart from '../../components/charts/RevenueExpenseChart';
 import SalesByCategoryDonut from '../../components/charts/SalesByCategoryDonut';
-import { mockApi } from '../../services/mockApi';
+import { api } from '../../services/api';
 import { formatCurrency } from '../../utils';
 import { useAuth } from '../../context/AuthContext';
+import { useUI } from '../../context/UIContext';
 import type { DashboardSummary, SalesOrder } from '../../types';
 
 export default function DashboardPage() {
   const { user } = useAuth();
+  const { addToast } = useUI();
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [orders, setOrders] = useState<SalesOrder[]>([]);
   const [loading, setLoading] = useState(true);
@@ -21,17 +35,19 @@ export default function DashboardPage() {
     const load = async () => {
       try {
         const [dashData, orderData] = await Promise.all([
-          mockApi.getDashboardSummary(),
-          mockApi.getSalesOrders(),
+          api.getDashboardSummary(),
+          api.getSalesOrders(),
         ]);
         setSummary(dashData);
         setOrders(orderData.slice(0, 8));
+      } catch (err: any) {
+        addToast(err.response?.data?.error?.message || 'Failed to load dashboard data', 'error');
       } finally {
         setLoading(false);
       }
     };
     load();
-  }, []);
+  }, [addToast]);
 
   const columns: Column<SalesOrder>[] = [
     {
@@ -39,26 +55,45 @@ export default function DashboardPage() {
       header: 'Order ID',
       mono: true,
       render: (row) => (
-        <span className="text-accent-blue-light font-mono text-xs">{row.id}</span>
+        <span className="text-accent-blue-light font-mono text-xs flex items-center gap-1.5">
+          <Layers className="w-3.5 h-3.5 text-accent-blue/70" />
+          {row.id}
+        </span>
       ),
     },
     {
       key: 'customer',
       header: 'Customer',
-      render: (row) => <span className="font-medium">{row.customer}</span>,
+      render: (row) => (
+        <span className="font-medium flex items-center gap-2">
+          <div className="w-6 h-6 rounded-full bg-navy-700 border border-navy-500/40 flex items-center justify-center text-text-muted">
+            <User className="w-3 h-3 text-accent-blue-light" />
+          </div>
+          {row.customer}
+        </span>
+      ),
       sortable: true,
       sortValue: (row) => row.customer,
     },
     {
       key: 'date',
       header: 'Date',
-      render: (row) => <span className="text-text-secondary">{row.date}</span>,
+      render: (row) => (
+        <span className="text-text-secondary flex items-center gap-1.5 text-xs">
+          <Calendar className="w-3.5 h-3.5 text-text-muted" />
+          {row.date}
+        </span>
+      ),
     },
     {
       key: 'items',
       header: 'Items',
       align: 'center',
-      render: (row) => row.items,
+      render: (row) => (
+        <span className="inline-flex items-center gap-1 font-mono text-xs bg-navy-700/50 px-2 py-0.5 rounded border border-navy-600/40">
+          {row.items}
+        </span>
+      ),
       sortable: true,
       sortValue: (row) => row.items,
     },
@@ -67,7 +102,7 @@ export default function DashboardPage() {
       header: 'Total',
       align: 'right',
       render: (row) => (
-        <span className="font-medium">{formatCurrency(row.total)}</span>
+        <span className="font-semibold text-text-primary font-mono">{formatCurrency(row.total)}</span>
       ),
       sortable: true,
       sortValue: (row) => row.total,
@@ -89,7 +124,7 @@ export default function DashboardPage() {
       <div>
         <PageHeader
           title={`Welcome back, ${user?.name?.split(' ')[0] || 'User'}!`}
-          subtitle="Overview for December 2024 · FY2024"
+          subtitle="Overview for FY2024"
         />
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
           {Array.from({ length: 4 }).map((_, i) => (
@@ -107,7 +142,19 @@ export default function DashboardPage() {
     <div>
       <PageHeader
         title={`Welcome back, ${user?.name?.split(' ')[0] || 'User'}!`}
-        subtitle={`Role: ${user?.role || 'Staff'} · Overview for December 2024 · FY2024`}
+        subtitle={`Role: ${user?.role || 'Staff'} · System Operational`}
+        actions={
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              <Activity className="w-3.5 h-3.5 animate-pulse" />
+              API Connected
+            </span>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-navy-700/60 text-text-secondary border border-navy-600/40">
+              <CheckCircle2 className="w-3.5 h-3.5 text-accent-blue" />
+              SQLite DB Active
+            </span>
+          </div>
+        }
       />
 
       {/* KPI Cards */}
@@ -115,11 +162,11 @@ export default function DashboardPage() {
         <KpiCard
           label="Total Revenue"
           value={formatCurrency(summary.totalRevenue)}
-          subtitle="Dec 2024"
+          subtitle="YTD Performance"
           trend={{ text: summary.revenueTrend, type: 'up' }}
-          icon={TrendingUp}
+          icon={BadgeDollarSign}
           iconColor="text-emerald-400"
-          iconBg="bg-emerald-500/10"
+          iconBg="bg-emerald-500/10 border border-emerald-500/20"
         />
         <KpiCard
           label="Outstanding Credit"
@@ -129,30 +176,30 @@ export default function DashboardPage() {
             text: `${summary.overdueAccounts} account overdue`,
             type: 'warning',
           }}
-          icon={CreditCard}
+          icon={Wallet}
           iconColor="text-accent-blue"
-          iconBg="bg-accent-blue/10"
+          iconBg="bg-accent-blue/10 border border-accent-blue/20"
         />
         <KpiCard
           label="Stock Alerts"
           value={`${summary.stockAlerts} SKUs`}
           subtitle={`${summary.outOfStock} out of stock`}
           trend={{ text: 'Reorder required', type: 'warning' }}
-          icon={AlertTriangle}
+          icon={AlertOctagon}
           iconColor="text-amber-400"
-          iconBg="bg-amber-500/10"
+          iconBg="bg-amber-500/10 border border-amber-500/20"
         />
         <KpiCard
           label="Monthly Payroll"
           value={formatCurrency(summary.monthlyPayroll)}
-          subtitle={`${summary.payrollEmployees} employees · Dec`}
+          subtitle={`${summary.payrollEmployees} active employees`}
           trend={{
             text: `Processed ${summary.payrollProcessed}`,
             type: 'neutral',
           }}
           icon={Users}
           iconColor="text-indigo-400"
-          iconBg="bg-indigo-500/10"
+          iconBg="bg-indigo-500/10 border border-indigo-500/20"
         />
       </div>
 
@@ -169,10 +216,21 @@ export default function DashboardPage() {
       {/* Recent Sales */}
       <div className="bg-navy-800 border border-navy-500/50 rounded-xl">
         <div className="flex items-center justify-between p-5 pb-0">
-          <h3 className="text-sm font-semibold text-text-primary">
-            Recent Sales Orders
-          </h3>
-          <span className="text-xs text-text-muted">Last 8 orders</span>
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-accent-blue/10 border border-accent-blue/20 flex items-center justify-center text-accent-blue-light">
+              <ShoppingBag className="w-4 h-4" />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-text-primary">
+                Recent Sales Orders
+              </h3>
+              <p className="text-xs text-text-muted">Live transaction history</p>
+            </div>
+          </div>
+          <span className="inline-flex items-center gap-1.5 text-xs text-text-muted bg-navy-700/50 px-2.5 py-1 rounded-md border border-navy-600/40">
+            <Clock className="w-3.5 h-3.5 text-accent-blue" />
+            Last 8 orders
+          </span>
         </div>
         <div className="p-5 pt-3">
           <DataTable columns={columns} data={orders} loading={loading} />

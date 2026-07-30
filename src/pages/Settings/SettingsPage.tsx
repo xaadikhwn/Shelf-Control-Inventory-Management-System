@@ -76,13 +76,13 @@ export default function SettingsPage() {
                 <div className="space-y-4">
                   <div className="flex items-center gap-4 mb-6">
                     <div className="w-16 h-16 bg-accent-blue/20 rounded-full flex items-center justify-center text-2xl font-bold text-accent-blue">
-                      {user.initials}
+                      {user?.initials || 'US'}
                     </div>
                     <div>
                       <p className="font-semibold text-text-primary">
-                        {user.name}
+                        {user?.name || 'User'}
                       </p>
-                      <p className="text-sm text-text-secondary">{user.role}</p>
+                      <p className="text-sm text-text-secondary">{user?.role || 'Staff'}</p>
                     </div>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -92,7 +92,7 @@ export default function SettingsPage() {
                       </label>
                       <input
                         type="text"
-                        defaultValue={user.name}
+                        defaultValue={user?.name || ''}
                         className="w-full bg-navy-700 border border-navy-500/50 rounded-lg px-3 py-2 text-sm text-text-primary placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-accent-blue/50 focus:border-accent-blue"
                       />
                     </div>
@@ -104,7 +104,7 @@ export default function SettingsPage() {
                         <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
                         <input
                           type="email"
-                          defaultValue="saad.ibrar@university.ac.uk"
+                          defaultValue={user?.email || ''}
                           className="w-full bg-navy-700 border border-navy-500/50 rounded-lg pl-9 pr-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-blue/50"
                         />
                       </div>
@@ -115,7 +115,7 @@ export default function SettingsPage() {
                       </label>
                       <input
                         type="text"
-                        defaultValue={user.role}
+                        defaultValue={user?.role || ''}
                         disabled
                         className="w-full bg-navy-700/50 border border-navy-500/30 rounded-lg px-3 py-2 text-sm text-text-muted cursor-not-allowed"
                       />

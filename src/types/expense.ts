@@ -1,4 +1,5 @@
 export interface Expense {
+  id?: number;
   ref: string;
   description: string;
   category: string;

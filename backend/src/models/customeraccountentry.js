@@ -6,7 +6,7 @@ module.exports = (sequelize, DataTypes) => {
     }
   }
   CustomerAccountEntry.init({
-    customer_id: { type: DataTypes.INTEGER, allowNull: false, references: { model: 'customers', key: 'id' } }, entry_type: { type: DataTypes.ENUM('sale', 'payment', 'adjustment'), allowNull: false }, reference: { type: DataTypes.STRING }, amount: { type: DataTypes.DECIMAL(10, 2), allowNull: false }, balance_after: { type: DataTypes.DECIMAL(10, 2), allowNull: false }
+    customer_id: { type: DataTypes.INTEGER, allowNull: false, references: { model: 'Customers', key: 'id' } }, entry_type: { type: DataTypes.ENUM('sale', 'payment', 'adjustment'), allowNull: false }, reference: { type: DataTypes.STRING }, amount: { type: DataTypes.DECIMAL(10, 2), allowNull: false }, balance_after: { type: DataTypes.DECIMAL(10, 2), allowNull: false }
   }, {
     sequelize,
     modelName: 'CustomerAccountEntry',

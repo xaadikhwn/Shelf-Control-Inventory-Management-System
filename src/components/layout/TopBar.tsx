@@ -69,10 +69,10 @@ export default function TopBar() {
           {/* User chip */}
           <div className="flex items-center gap-2 pl-2 border-l border-navy-500/30">
             <div className="w-8 h-8 bg-accent-blue/20 rounded-full flex items-center justify-center text-xs font-bold text-accent-blue">
-              {user.initials}
+              {user?.initials || 'US'}
             </div>
             <span className="hidden md:block text-sm font-medium text-text-primary">
-              {user.name}
+              {user?.name || 'User'}
             </span>
           </div>
         </div>

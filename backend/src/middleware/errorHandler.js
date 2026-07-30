@@ -1,7 +1,7 @@
 const errorHandler = (err, req, res, next) => {
   console.error(err);
 
-  const statusCode = err.statusCode || 500;
+  let statusCode = err.statusCode || 500;
   const errorResponse = {
     code: err.code || 'INTERNAL_SERVER_ERROR',
     message: err.message || 'An unexpected error occurred',
@@ -10,6 +10,7 @@ const errorHandler = (err, req, res, next) => {
 
   // If it's a Zod error, format it
   if (err.name === 'ZodError') {
+    statusCode = 400;
     errorResponse.code = 'VALIDATION_ERROR';
     errorResponse.message = 'Validation failed';
     errorResponse.details = err.errors;

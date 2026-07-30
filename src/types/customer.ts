@@ -9,9 +9,11 @@ export interface CustomerOrder {
 
 export interface Customer {
   id: string;
+  dbId?: number;
   company: string;
   contact: string;
   phone: string;
+  email?: string;
   creditLimit: number;
   outstanding: number;
   lastOrder: string;

@@ -21,14 +21,14 @@ app.use(morgan('dev'));
 
 // Routes
 app.use('/api/auth', require('./routes/auth.routes'));
-// app.use('/api/dashboard', require('./routes/dashboard.routes'));
-// app.use('/api/sales', require('./routes/sales.routes'));
-// app.use('/api/products', require('./routes/inventory.routes'));
-// app.use('/api/payroll', require('./routes/payroll.routes'));
-// app.use('/api/expenses', require('./routes/expenses.routes'));
-// app.use('/api/customers', require('./routes/customers.routes'));
-// app.use('/api/suppliers', require('./routes/suppliers.routes'));
-// app.use('/api/users', require('./routes/users.routes'));
+app.use('/api/dashboard', require('./routes/dashboard.routes'));
+app.use('/api/sales', require('./routes/sales.routes'));
+app.use('/api/products', require('./routes/products.routes'));
+app.use('/api/payroll', require('./routes/payroll.routes'));
+app.use('/api/expenses', require('./routes/expenses.routes'));
+app.use('/api/customers', require('./routes/customers.routes'));
+app.use('/api/suppliers', require('./routes/suppliers.routes'));
+app.use('/api/users', require('./routes/users.routes'));
 
 app.get('/health', (req, res) => res.json({ success: true, message: 'API is running' }));
 

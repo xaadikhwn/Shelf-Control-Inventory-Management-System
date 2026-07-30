@@ -15,10 +15,15 @@ export default function RegisterPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      await registerUser(formData);
+      await registerUser({
+        full_name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        role: formData.role,
+      });
       navigate('/');
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Registration failed');
+      toast.error(error.response?.data?.error?.message || error.response?.data?.message || 'Registration failed');
     } finally {
       setLoading(false);
     }

@@ -6,28 +6,60 @@ import {
   DollarSign,
   Plus,
   Download,
+  Edit2,
+  Trash2,
 } from 'lucide-react';
 import PageHeader from '../../components/layout/PageHeader';
 import KpiCard from '../../components/ui/KpiCard';
 import DataTable, { type Column } from '../../components/ui/DataTable';
 import StatusBadge from '../../components/ui/StatusBadge';
 import Button from '../../components/ui/Button';
-import { mockApi } from '../../services/mockApi';
+import AddProductModal from './AddProductModal';
+import EditProductModal from './EditProductModal';
+import { api } from '../../services/api';
 import { formatCurrency, getStockQtyColor } from '../../utils';
 import { useUI } from '../../context/UIContext';
+import { useAuth } from '../../context/AuthContext';
 import type { Product } from '../../types';
 
 export default function InventoryPage() {
+  const { user } = useAuth();
+  const { addToast } = useUI();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const { addToast } = useUI();
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+
+  const fetchProducts = async () => {
+    setLoading(true);
+    try {
+      const data = await api.getProducts();
+      setProducts(data);
+    } catch (err: any) {
+      addToast(err.response?.data?.error?.message || 'Failed to fetch inventory', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    mockApi.getProducts().then((data) => {
-      setProducts(data);
-      setLoading(false);
-    });
+    fetchProducts();
   }, []);
+
+  const canManageStock = user?.role === 'Administrator' || user?.role === 'Manager' || user?.role === 'Warehouse Operative';
+
+  const handleDeleteProduct = async (product: Product) => {
+    if (!window.confirm(`Are you sure you want to delete "${product.name}"?`)) return;
+    try {
+      const prodId = product.dbId || product.id;
+      if (prodId === undefined) return;
+      await api.deleteProduct(prodId);
+      addToast('Product deleted successfully', 'success');
+      fetchProducts();
+    } catch (err: any) {
+      addToast(err.response?.data?.error?.message || 'Failed to delete product', 'error');
+    }
+  };
 
   const lowStock = products.filter((p) => p.status === 'low-stock').length;
   const outOfStock = products.filter((p) => p.status === 'out-of-stock').length;
@@ -102,6 +134,31 @@ export default function InventoryPage() {
       header: 'Status',
       render: (row) => <StatusBadge status={row.status} />,
     },
+    {
+      key: 'actions',
+      header: 'Actions',
+      align: 'right',
+      render: (row) => (
+        <div className="flex items-center justify-end gap-2">
+          <button
+            onClick={() => setEditingProduct(row)}
+            className="p-1.5 rounded-lg bg-navy-700/60 hover:bg-navy-600 text-accent-blue-light hover:text-white transition-colors"
+            title="Edit Product"
+          >
+            <Edit2 className="w-3.5 h-3.5" />
+          </button>
+          {user?.role === 'Administrator' && (
+            <button
+              onClick={() => handleDeleteProduct(row)}
+              className="p-1.5 rounded-lg bg-navy-700/60 hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 transition-colors"
+              title="Delete Product"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+      ),
+    },
   ];
 
   return (
@@ -115,22 +172,20 @@ export default function InventoryPage() {
               variant="secondary"
               size="sm"
               icon={<Download className="w-4 h-4" />}
-              onClick={() =>
-                addToast('Inventory data exported', 'success')
-              }
+              onClick={() => addToast('Inventory data exported', 'success')}
             >
               Export
             </Button>
-            <Button
-              variant="primary"
-              size="sm"
-              icon={<Plus className="w-4 h-4" />}
-              onClick={() =>
-                addToast('Add product form coming in Phase 2', 'info')
-              }
-            >
-              Add Product
-            </Button>
+            {canManageStock && (
+              <Button
+                variant="primary"
+                size="sm"
+                icon={<Plus className="w-4 h-4" />}
+                onClick={() => setIsAddModalOpen(true)}
+              >
+                Add Product
+              </Button>
+            )}
           </>
         }
       />
@@ -196,9 +251,7 @@ export default function InventoryPage() {
               variant="ghost"
               size="sm"
               icon={<Download className="w-3.5 h-3.5" />}
-              onClick={() =>
-                addToast('Stock report exported', 'success')
-              }
+              onClick={() => addToast('Stock report exported', 'success')}
             >
               Export
             </Button>
@@ -208,6 +261,19 @@ export default function InventoryPage() {
           <DataTable columns={columns} data={products} loading={loading} />
         </div>
       </div>
+
+      <AddProductModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onSuccess={fetchProducts}
+      />
+
+      <EditProductModal
+        isOpen={!!editingProduct}
+        product={editingProduct}
+        onClose={() => setEditingProduct(null)}
+        onSuccess={fetchProducts}
+      />
     </div>
   );
 }

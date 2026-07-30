@@ -6,7 +6,7 @@ module.exports = {
     await queryInterface.bulkInsert('Users', [{
       full_name: 'System Admin',
       email: 'admin@bizmanage.com',
-      password_hash: '$2b$12$X83kFSIT9x1D.fVmfPXDcOpzEfvYoQhNQY0OKnNGhwpj7krgJbGgC',
+      password_hash: '$2b$12$RiGalL.xxamtq/6KRLfDgeklolAFTjZFp0AwibCE7p1Aa5LHlcxhi',
       role_id: adminRoleId,
       is_active: true,
       created_at: new Date(),

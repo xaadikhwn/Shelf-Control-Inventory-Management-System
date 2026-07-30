@@ -1,4 +1,6 @@
 export interface Product {
+  id?: number | string;
+  dbId?: number;
   sku: string;
   name: string;
   category: string;

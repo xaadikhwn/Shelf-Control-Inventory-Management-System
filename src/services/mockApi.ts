@@ -1,3 +1,4 @@
+import apiClient from './apiClient';
 import { customers, suppliers, products, salesOrders, employees, expenses, dashboardSummary } from '../mock-data';
 import type { Customer } from '../types/customer';
 import type { Supplier } from '../types/supplier';
@@ -7,58 +8,91 @@ import type { Employee } from '../types/employee';
 import type { Expense } from '../types/expense';
 import type { DashboardSummary } from '../types';
 
-/**
- * Simulates API latency. In Phase 2, this layer will be replaced
- * with real Axios calls — one-line change per function.
- */
-const delay = (ms = 300): Promise<void> =>
-  new Promise((resolve) => setTimeout(resolve, ms));
-
 export const mockApi = {
   // ── Dashboard ──────────────────────────────────────
   getDashboardSummary: async (): Promise<DashboardSummary> => {
-    await delay();
+    try {
+      const res = await apiClient.get('/dashboard/summary');
+      if (res.data?.success && res.data?.data) return res.data.data;
+    } catch (e) {
+      console.warn('Backend endpoint unavailable, using fallback', e);
+    }
     return { ...dashboardSummary };
   },
 
   // ── Customers ──────────────────────────────────────
   getCustomers: async (): Promise<Customer[]> => {
-    await delay();
+    try {
+      const res = await apiClient.get('/customers');
+      if (res.data?.success && Array.isArray(res.data?.data)) return res.data.data;
+    } catch (e) {
+      console.warn('Backend endpoint unavailable, using fallback', e);
+    }
     return [...customers];
   },
 
   getCustomerById: async (id: string): Promise<Customer | undefined> => {
-    await delay(200);
+    try {
+      const res = await apiClient.get(`/customers/${id}`);
+      if (res.data?.success && res.data?.data) return res.data.data;
+    } catch (e) {
+      console.warn('Backend endpoint unavailable, using fallback', e);
+    }
     return customers.find((c) => c.id === id);
   },
 
   // ── Suppliers ──────────────────────────────────────
   getSuppliers: async (): Promise<Supplier[]> => {
-    await delay();
+    try {
+      const res = await apiClient.get('/suppliers');
+      if (res.data?.success && Array.isArray(res.data?.data)) return res.data.data;
+    } catch (e) {
+      console.warn('Backend endpoint unavailable, using fallback', e);
+    }
     return [...suppliers];
   },
 
   // ── Products / Inventory ───────────────────────────
   getProducts: async (): Promise<Product[]> => {
-    await delay();
+    try {
+      const res = await apiClient.get('/products');
+      if (res.data?.success && Array.isArray(res.data?.data)) return res.data.data;
+    } catch (e) {
+      console.warn('Backend endpoint unavailable, using fallback', e);
+    }
     return [...products];
   },
 
   // ── Sales Orders ───────────────────────────────────
   getSalesOrders: async (): Promise<SalesOrder[]> => {
-    await delay();
+    try {
+      const res = await apiClient.get('/sales');
+      if (res.data?.success && Array.isArray(res.data?.data)) return res.data.data;
+    } catch (e) {
+      console.warn('Backend endpoint unavailable, using fallback', e);
+    }
     return [...salesOrders];
   },
 
   // ── Employees / Payroll ────────────────────────────
   getEmployees: async (): Promise<Employee[]> => {
-    await delay();
+    try {
+      const res = await apiClient.get('/payroll');
+      if (res.data?.success && Array.isArray(res.data?.data)) return res.data.data;
+    } catch (e) {
+      console.warn('Backend endpoint unavailable, using fallback', e);
+    }
     return [...employees];
   },
 
   // ── Expenses ───────────────────────────────────────
   getExpenses: async (): Promise<Expense[]> => {
-    await delay();
+    try {
+      const res = await apiClient.get('/expenses');
+      if (res.data?.success && Array.isArray(res.data?.data)) return res.data.data;
+    } catch (e) {
+      console.warn('Backend endpoint unavailable, using fallback', e);
+    }
     return [...expenses];
   },
 };

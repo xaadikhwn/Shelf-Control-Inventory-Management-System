@@ -5,29 +5,84 @@ import {
   Clock,
   Grid3X3,
   Plus,
-  Download,
+  FileSpreadsheet,
+  FileText,
+  Trash2,
+  Check,
+  X,
 } from 'lucide-react';
 import PageHeader from '../../components/layout/PageHeader';
 import KpiCard from '../../components/ui/KpiCard';
 import DataTable, { type Column } from '../../components/ui/DataTable';
 import StatusBadge from '../../components/ui/StatusBadge';
 import Button from '../../components/ui/Button';
-import { mockApi } from '../../services/mockApi';
+import LogExpenseModal from './LogExpenseModal';
+import { api } from '../../services/api';
 import { formatCurrency } from '../../utils';
+import { exportToExcel, exportToPDF } from '../../utils/exportUtils';
 import { useUI } from '../../context/UIContext';
+import { useAuth } from '../../context/AuthContext';
 import type { Expense } from '../../types';
 
 export default function ExpensesPage() {
+  const { user } = useAuth();
+  const { addToast } = useUI();
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
-  const { addToast } = useUI();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const fetchExpenses = async () => {
+    setLoading(true);
+    try {
+      const data = await api.getExpenses();
+      setExpenses(data);
+    } catch (err: any) {
+      addToast(err.response?.data?.error?.message || 'Failed to fetch expenses', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    mockApi.getExpenses().then((data) => {
-      setExpenses(data);
-      setLoading(false);
-    });
+    fetchExpenses();
   }, []);
+
+  const handleExportExcel = () => {
+    const headers = ['Ref', 'Description', 'Category', 'Amount (£)', 'Date', 'Submitted By', 'Status'];
+    const rows = expenses.map((e) => [e.ref, e.description, e.category, e.amount, e.date, e.submittedBy, e.status]);
+    exportToExcel('expenses_report_2026', headers, rows);
+    addToast('Expenses exported to Excel (CSV)', 'success');
+  };
+
+  const handleExportPDF = () => {
+    const headers = ['Ref', 'Description', 'Category', 'Amount (£)', 'Date', 'Submitted By', 'Status'];
+    const rows = expenses.map((e) => [e.ref, e.description, e.category, `£${e.amount}`, e.date, e.submittedBy, e.status]);
+    exportToPDF('Expenses Report', headers, rows);
+    addToast('Expenses PDF generated', 'success');
+  };
+
+  const handleUpdateStatus = async (exp: Expense, status: 'approved' | 'rejected') => {
+    try {
+      const expId = exp.id || Number(exp.ref.replace(/\D/g, ''));
+      await api.updateExpenseStatus(expId, status);
+      addToast(`Expense status updated to ${status}`, 'success');
+      fetchExpenses();
+    } catch (err: any) {
+      addToast(err.response?.data?.error?.message || 'Failed to update expense status', 'error');
+    }
+  };
+
+  const handleDeleteExpense = async (exp: Expense) => {
+    if (!window.confirm(`Are you sure you want to delete expense "${exp.ref}"?`)) return;
+    try {
+      const expId = exp.id || Number(exp.ref.replace(/\D/g, ''));
+      await api.deleteExpense(expId);
+      addToast('Expense deleted successfully', 'success');
+      fetchExpenses();
+    } catch (err: any) {
+      addToast(err.response?.data?.error?.message || 'Failed to delete expense', 'error');
+    }
+  };
 
   const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
   const approvedTotal = expenses
@@ -88,30 +143,72 @@ export default function ExpensesPage() {
       header: 'Status',
       render: (row) => <StatusBadge status={row.status} />,
     },
+    {
+      key: 'actions',
+      header: 'Actions',
+      align: 'right',
+      render: (row) => (
+        <div className="flex items-center justify-end gap-2">
+          {row.status === 'pending' && (user?.role === 'Administrator' || user?.role === 'Manager') && (
+            <>
+              <button
+                onClick={() => handleUpdateStatus(row, 'approved')}
+                className="p-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 transition-colors"
+                title="Approve Expense"
+              >
+                <Check className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={() => handleUpdateStatus(row, 'rejected')}
+                className="p-1.5 rounded-lg bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 transition-colors"
+                title="Reject Expense"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </>
+          )}
+          {user?.role === 'Administrator' && (
+            <button
+              onClick={() => handleDeleteExpense(row)}
+              className="p-1.5 rounded-lg bg-navy-700/60 hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 transition-colors"
+              title="Delete Expense"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+      ),
+    },
   ];
 
   return (
     <div>
       <PageHeader
         title="Expenses"
-        subtitle="Business expenditure tracking · December 2024"
+        subtitle="Business expenditure tracking"
         actions={
           <>
             <Button
               variant="secondary"
               size="sm"
-              icon={<Download className="w-4 h-4" />}
-              onClick={() => addToast('Expense data exported', 'success')}
+              icon={<FileSpreadsheet className="w-4 h-4 text-emerald-400" />}
+              onClick={handleExportExcel}
             >
-              Export
+              Export Excel
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={<FileText className="w-4 h-4 text-rose-400" />}
+              onClick={handleExportPDF}
+            >
+              Export PDF
             </Button>
             <Button
               variant="primary"
               size="sm"
               icon={<Plus className="w-4 h-4" />}
-              onClick={() =>
-                addToast('Expense logged successfully', 'success')
-              }
+              onClick={() => setIsModalOpen(true)}
             >
               Log Expense
             </Button>
@@ -124,7 +221,7 @@ export default function ExpensesPage() {
         <KpiCard
           label="Total Expenses"
           value={formatCurrency(totalExpenses)}
-          subtitle="December 2024"
+          subtitle="All time"
           icon={Receipt}
           iconColor="text-accent-blue"
           iconBg="bg-accent-blue/10"
@@ -165,21 +262,27 @@ export default function ExpensesPage() {
       <div className="bg-navy-800 border border-navy-500/50 rounded-xl">
         <div className="flex items-center justify-between p-5 pb-0">
           <h3 className="text-sm font-semibold text-text-primary">
-            Expense Claims — December 2024
+            Expense Claims
           </h3>
-          <Button
-            variant="ghost"
-            size="sm"
-            icon={<Download className="w-3.5 h-3.5" />}
-            onClick={() => addToast('CSV exported', 'success')}
-          >
-            CSV
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" icon={<FileSpreadsheet className="w-3.5 h-3.5" />} onClick={handleExportExcel}>
+              Excel
+            </Button>
+            <Button variant="ghost" size="sm" icon={<FileText className="w-3.5 h-3.5" />} onClick={handleExportPDF}>
+              PDF
+            </Button>
+          </div>
         </div>
         <div className="p-5 pt-3">
           <DataTable columns={columns} data={expenses} loading={loading} />
         </div>
       </div>
+
+      <LogExpenseModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSuccess={fetchExpenses}
+      />
     </div>
   );
 }

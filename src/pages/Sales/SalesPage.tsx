@@ -12,22 +12,37 @@ import KpiCard from '../../components/ui/KpiCard';
 import DataTable, { type Column } from '../../components/ui/DataTable';
 import StatusBadge from '../../components/ui/StatusBadge';
 import Button from '../../components/ui/Button';
-import { mockApi } from '../../services/mockApi';
+import NewSaleModal from './NewSaleModal';
+import { api } from '../../services/api';
 import { formatCurrency } from '../../utils';
 import { useUI } from '../../context/UIContext';
+import { useAuth } from '../../context/AuthContext';
 import type { SalesOrder } from '../../types';
 
 export default function SalesPage() {
+  const { user } = useAuth();
+  const { addToast } = useUI();
   const [orders, setOrders] = useState<SalesOrder[]>([]);
   const [loading, setLoading] = useState(true);
-  const { addToast } = useUI();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const fetchOrders = async () => {
+    setLoading(true);
+    try {
+      const data = await api.getSalesOrders();
+      setOrders(data);
+    } catch (err: any) {
+      addToast(err.response?.data?.error?.message || 'Failed to fetch sales orders', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    mockApi.getSalesOrders().then((data) => {
-      setOrders(data);
-      setLoading(false);
-    });
+    fetchOrders();
   }, []);
+
+  const canCreateSale = user?.role === 'Administrator' || user?.role === 'Manager' || user?.role === 'Sales Representative';
 
   const totalSales = orders.reduce((sum, o) => sum + o.total, 0);
   const avgOrderValue = orders.length ? totalSales / orders.length : 0;
@@ -102,14 +117,16 @@ export default function SalesPage() {
             >
               Export
             </Button>
-            <Button
-              variant="primary"
-              size="sm"
-              icon={<Plus className="w-4 h-4" />}
-              onClick={() => addToast('New order form coming in Phase 2', 'info')}
-            >
-              New Order
-            </Button>
+            {canCreateSale && (
+              <Button
+                variant="primary"
+                size="sm"
+                icon={<Plus className="w-4 h-4" />}
+                onClick={() => setIsModalOpen(true)}
+              >
+                New Order
+              </Button>
+            )}
           </>
         }
       />
@@ -119,7 +136,7 @@ export default function SalesPage() {
         <KpiCard
           label="Total Sales"
           value={formatCurrency(totalSales)}
-          subtitle="December 2024"
+          subtitle="Lifetime total"
           icon={ShoppingCart}
           iconColor="text-emerald-400"
           iconBg="bg-emerald-500/10"
@@ -127,7 +144,7 @@ export default function SalesPage() {
         <KpiCard
           label="Orders"
           value={orders.length.toString()}
-          subtitle="this month"
+          subtitle="total orders"
           icon={ClipboardList}
           iconColor="text-accent-blue"
           iconBg="bg-accent-blue/10"
@@ -159,7 +176,7 @@ export default function SalesPage() {
       <div className="bg-navy-800 border border-navy-500/50 rounded-xl">
         <div className="flex items-center justify-between p-5 pb-0">
           <h3 className="text-sm font-semibold text-text-primary">
-            Sales Orders — December 2024
+            Sales Orders
           </h3>
           <span className="text-xs text-text-muted">
             {orders.length} orders
@@ -169,6 +186,12 @@ export default function SalesPage() {
           <DataTable columns={columns} data={orders} loading={loading} />
         </div>
       </div>
+
+      <NewSaleModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSuccess={fetchOrders}
+      />
     </div>
   );
 }

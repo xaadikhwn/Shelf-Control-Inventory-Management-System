@@ -1,24 +1,50 @@
 const db = require('../models');
 
+// ── Adapter: Sequelize SalesOrder row → frontend shape ─
+function formatOrder(o) {
+  const customerName = o.Customer
+    ? o.Customer.company_name
+    : o.customer_id
+    ? `Customer #${o.customer_id}`
+    : 'Unknown';
+
+  const lineCount = o.SaleLines ? o.SaleLines.length : 0;
+
+  return {
+    id: o.order_code || `SO-${o.id}`,
+    dbId: o.id,
+    customerId: String(o.customer_id),
+    customer: customerName,
+    date: o.order_date
+      ? new Date(o.order_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+      : 'N/A',
+    items: lineCount,
+    total: parseFloat(o.total_amount) || 0,
+    orderStatus: o.order_status || 'pending',
+    payment: o.payment_status || 'pending',
+  };
+}
+
 exports.list = async (req, res, next) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 20;
+    const page = parseInt(req.query?.page) || 1;
+    const limit = parseInt(req.query?.limit) || 50;
     const offset = (page - 1) * limit;
 
-    const { count, rows } = await db.SalesOrder.findAndCountAll({ 
-      limit, 
+    const { count, rows } = await db.SalesOrder.findAndCountAll({
+      limit,
       offset,
+      order: [['order_date', 'DESC']],
       include: [
         { model: db.Customer, attributes: ['id', 'company_name'] },
-        { model: db.User, attributes: ['id', 'full_name'] }
-      ]
+        { model: db.SaleLine },
+      ],
     });
 
     res.status(200).json({
       success: true,
-      data: rows,
-      meta: { page, limit, total: count }
+      data: rows.map(formatOrder),
+      meta: { page, limit, total: count },
     });
   } catch (error) {
     next(error);
@@ -30,15 +56,15 @@ exports.getById = async (req, res, next) => {
     const order = await db.SalesOrder.findByPk(req.params.id, {
       include: [
         { model: db.Customer },
-        { model: db.SaleLine, include: [{ model: db.Product }] }
-      ]
+        { model: db.SaleLine, include: [{ model: db.Product }] },
+      ],
     });
     if (!order) {
       const err = new Error('Sales order not found');
       err.statusCode = 404;
       return next(err);
     }
-    res.status(200).json({ success: true, data: order });
+    res.status(200).json({ success: true, data: formatOrder(order) });
   } catch (error) {
     next(error);
   }
@@ -48,111 +74,115 @@ exports.create = async (req, res, next) => {
   const t = await db.sequelize.transaction();
   try {
     const { customer_id, payment_status, items } = req.body;
-    
-    // Calculate totals and check stock
+
+    if (!items || !items.length) {
+      const err = new Error('At least one item is required');
+      err.statusCode = 400;
+      throw err;
+    }
+
+    // Resolve customer by PK or account_code
+    let targetCustomer = null;
+    if (typeof customer_id === 'number' || !isNaN(Number(customer_id))) {
+      targetCustomer = await db.Customer.findByPk(Number(customer_id), { transaction: t });
+    }
+    if (!targetCustomer && customer_id) {
+      targetCustomer = await db.Customer.findOne({ where: { account_code: String(customer_id) }, transaction: t });
+    }
+    if (!targetCustomer) {
+      targetCustomer = await db.Customer.findOne({ transaction: t });
+    }
+
+    const resolvedCustomerId = targetCustomer ? targetCustomer.id : 1;
+
     let total_amount = 0;
     const lineItemsToCreate = [];
-    
+
+    const isMysql = db.sequelize.getDialect() === 'mysql';
+    const lockOption = isMysql ? t.LOCK.UPDATE : undefined;
+
     for (const item of items) {
-      // Get product with row lock
-      const product = await db.Product.findByPk(item.product_id, { transaction: t, lock: t.LOCK.UPDATE });
-      if (!product) throw new Error(`Product ${item.product_id} not found`);
-      if (product.quantity < item.quantity) throw new Error(`Insufficient stock for product ${product.name}`);
-      
+      const product = await db.Product.findByPk(item.product_id, { transaction: t, lock: lockOption });
+      if (!product) throw Object.assign(new Error(`Product ${item.product_id} not found`), { statusCode: 404 });
+      if (product.quantity < item.quantity)
+        throw Object.assign(new Error(`Insufficient stock for "${product.name}". Available: ${product.quantity}`), { statusCode: 422 });
+
       const line_total = parseFloat(product.sale_price) * item.quantity;
       total_amount += line_total;
-      
-      lineItemsToCreate.push({
-        product_id: product.id,
-        quantity: item.quantity,
-        unit_price: product.sale_price,
-        line_total
-      });
-      
-      // Decrement stock
+
+      lineItemsToCreate.push({ product_id: product.id, quantity: item.quantity, unit_price: product.sale_price, line_total });
+
       product.quantity -= item.quantity;
-      
-      // Update status and alert
-      let newStatus = 'in-stock';
-      if (product.quantity <= 0) newStatus = 'out-of-stock';
-      else if (product.quantity <= product.reorder_point) newStatus = 'low-stock';
-      
-      if (product.status !== newStatus) {
-        product.status = newStatus;
-      }
-      
-      if (newStatus !== 'in-stock') {
-        const existingAlert = await db.StockAlert.findOne({
-          where: { product_id: product.id, resolved_at: null },
-          transaction: t
-        });
+      if (product.quantity <= 0) product.status = 'out-of-stock';
+      else if (product.quantity <= product.reorder_point) product.status = 'low-stock';
+      else product.status = 'in-stock';
+
+      if (product.status !== 'in-stock') {
+        const existingAlert = await db.StockAlert.findOne({ where: { product_id: product.id, resolved_at: null }, transaction: t });
         if (!existingAlert) {
-          await db.StockAlert.create({
-            product_id: product.id,
-            quantity_at_trigger: product.quantity,
-            threshold_at_trigger: product.reorder_point,
-            triggered_at: new Date()
-          }, { transaction: t });
+          await db.StockAlert.create(
+            { product_id: product.id, quantity_at_trigger: product.quantity, threshold_at_trigger: product.reorder_point, triggered_at: new Date() },
+            { transaction: t }
+          );
         }
       }
       await product.save({ transaction: t });
     }
-    
-    const order_code = `SO-${new Date().getFullYear()}-${Math.floor(Math.random() * 10000)}`;
-    
-    const salesOrder = await db.SalesOrder.create({
-      order_code,
-      customer_id,
-      order_date: new Date(),
-      total_amount,
-      order_status: 'completed', // simplified status handling
-      payment_status,
-      created_by: req.user.id
-    }, { transaction: t });
-    
-    // Link line items
+
+    const order_code = `SO-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 90000) + 10000)}`;
+
+    const salesOrder = await db.SalesOrder.create(
+      { order_code, customer_id: resolvedCustomerId, order_date: new Date(), total_amount, order_status: 'completed', payment_status: payment_status || 'paid', created_by: req.user?.id || 1 },
+      { transaction: t }
+    );
+
     for (const lineItem of lineItemsToCreate) {
-      lineItem.sales_order_id = salesOrder.id;
-      await db.SaleLine.create(lineItem, { transaction: t });
+      await db.SaleLine.create({ ...lineItem, sales_order_id: salesOrder.id }, { transaction: t });
     }
-    
-    // If credit sale, update customer ledger
-    if (payment_status === 'credit') {
-      const customer = await db.Customer.findByPk(customer_id, { transaction: t, lock: t.LOCK.UPDATE });
-      if (!customer) throw new Error('Customer not found');
-      
-      const balance_after = parseFloat(customer.credit_limit) - total_amount; // assuming credit limit acts as balance or vice versa?
-      // Wait, "outstanding balance". Typically customers have a balance, and credit limit is the max.
-      // Let's assume customer needs a balance field, but schema only has credit_limit.
-      // But section 4.9 says `balance_after`. We can query last entry to get current balance.
-      
+
+    // Credit sale → update customer ledger
+    if (payment_status === 'credit' && targetCustomer) {
       const lastEntry = await db.CustomerAccountEntry.findOne({
-        where: { customer_id },
+        where: { customer_id: targetCustomer.id },
         order: [['created_at', 'DESC']],
-        transaction: t
+        transaction: t,
       });
       const currentBalance = lastEntry ? parseFloat(lastEntry.balance_after) : 0;
       const newBalance = currentBalance + total_amount;
-      
-      await db.CustomerAccountEntry.create({
-        customer_id,
-        entry_type: 'sale',
-        reference: salesOrder.id.toString(),
-        amount: total_amount,
-        balance_after: newBalance
-      }, { transaction: t });
-      
-      // Maybe update customer status?
-      if (newBalance > parseFloat(customer.credit_limit)) {
-        customer.status = 'warning';
-        await customer.save({ transaction: t });
-      }
+
+      await db.CustomerAccountEntry.create(
+        { customer_id: targetCustomer.id, entry_type: 'sale', reference: order_code, amount: total_amount, balance_after: newBalance },
+        { transaction: t }
+      );
+
+      const utilisation = parseFloat(targetCustomer.credit_limit) > 0 ? (newBalance / parseFloat(targetCustomer.credit_limit)) * 100 : 0;
+      if (utilisation > 90) targetCustomer.status = 'overdue';
+      else if (utilisation > 70) targetCustomer.status = 'warning';
+      await targetCustomer.save({ transaction: t });
     }
-    
+
     await t.commit();
-    res.status(201).json({ success: true, data: salesOrder });
+
+    // Return the fully formatted order
+    const created = await db.SalesOrder.findByPk(salesOrder.id, {
+      include: [{ model: db.Customer, attributes: ['id', 'company_name'] }, { model: db.SaleLine }],
+    });
+    res.status(201).json({ success: true, data: formatOrder(created) });
   } catch (error) {
     await t.rollback();
+    next(error);
+  }
+};
+
+exports.updateStatus = async (req, res, next) => {
+  try {
+    const { status } = req.body;
+    const order = await db.SalesOrder.findByPk(req.params.id);
+    if (!order) return res.status(404).json({ success: false, error: { message: 'Order not found' } });
+    order.order_status = status;
+    await order.save();
+    res.status(200).json({ success: true, data: formatOrder(order) });
+  } catch (error) {
     next(error);
   }
 };

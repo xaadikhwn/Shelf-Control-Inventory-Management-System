@@ -6,7 +6,7 @@ module.exports = (sequelize, DataTypes) => {
     }
   }
   StockAlert.init({
-    product_id: { type: DataTypes.INTEGER, allowNull: false, references: { model: 'products', key: 'id' } }, triggered_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW }, quantity_at_trigger: { type: DataTypes.INTEGER, allowNull: false }, threshold_at_trigger: { type: DataTypes.INTEGER, allowNull: false }, resolved_at: { type: DataTypes.DATE }
+    product_id: { type: DataTypes.INTEGER, allowNull: false, references: { model: 'Products', key: 'id' } }, triggered_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW }, quantity_at_trigger: { type: DataTypes.INTEGER, allowNull: false }, threshold_at_trigger: { type: DataTypes.INTEGER, allowNull: false }, resolved_at: { type: DataTypes.DATE }
   }, {
     sequelize,
     modelName: 'StockAlert',

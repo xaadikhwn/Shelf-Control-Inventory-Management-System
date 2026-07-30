@@ -19,7 +19,7 @@ export default function LoginPage() {
       await login({ email, password });
       navigate('/');
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to login');
+      toast.error(error.response?.data?.error?.message || error.response?.data?.message || 'Failed to login');
     } finally {
       setLoading(false);
     }

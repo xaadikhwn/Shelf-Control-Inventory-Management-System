@@ -7,7 +7,7 @@ let user, customer, product, token;
 
 describe('Sales & Customers Integration', () => {
   beforeAll(async () => {
-    // Setup initial data
+    // Setup initial test data
     const role = await db.Role.create({ name: 'Administrator' });
     user = await db.User.create({
       full_name: 'Test Admin',

@@ -5,7 +5,10 @@ import {
   AlertTriangle,
   TrendingDown,
   Plus,
-  Download,
+  FileSpreadsheet,
+  FileText,
+  Edit2,
+  Trash2,
 } from 'lucide-react';
 import PageHeader from '../../components/layout/PageHeader';
 import KpiCard from '../../components/ui/KpiCard';
@@ -14,23 +17,69 @@ import StatusBadge from '../../components/ui/StatusBadge';
 import ProgressBar from '../../components/ui/ProgressBar';
 import Button from '../../components/ui/Button';
 import CustomerDetailModal from './CustomerDetailModal';
-import { mockApi } from '../../services/mockApi';
+import AddCustomerModal from './AddCustomerModal';
+import EditCustomerModal from './EditCustomerModal';
+import { api } from '../../services/api';
 import { formatCurrency } from '../../utils';
+import { exportToExcel, exportToPDF } from '../../utils/exportUtils';
 import { useUI } from '../../context/UIContext';
+import { useAuth } from '../../context/AuthContext';
 import type { Customer } from '../../types';
 
 export default function CustomersPage() {
+  const { user } = useAuth();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const { addToast } = useUI();
 
-  useEffect(() => {
-    mockApi.getCustomers().then((data) => {
+  const fetchCustomers = async () => {
+    setLoading(true);
+    try {
+      const data = await api.getCustomers();
       setCustomers(data);
+      if (selectedCustomer) {
+        const updatedSelected = data.find((c) => String(c.id) === String(selectedCustomer.id));
+        if (updatedSelected) setSelectedCustomer(updatedSelected);
+      }
+    } catch (err: any) {
+      addToast(err.response?.data?.error?.message || 'Failed to fetch customers', 'error');
+    } finally {
       setLoading(false);
-    });
+    }
+  };
+
+  useEffect(() => {
+    fetchCustomers();
   }, []);
+
+  const handleDeleteCustomer = async (cust: Customer) => {
+    if (!window.confirm(`Are you sure you want to delete customer "${cust.company}"?`)) return;
+    try {
+      const custId = cust.dbId || cust.id;
+      await api.deleteCustomer(custId);
+      addToast('Customer account deleted successfully', 'success');
+      fetchCustomers();
+    } catch (err: any) {
+      addToast(err.response?.data?.error?.message || 'Failed to delete customer', 'error');
+    }
+  };
+
+  const handleExportExcel = () => {
+    const headers = ['Account Code', 'Company', 'Contact', 'Phone', 'Credit Limit (£)', 'Outstanding (£)', 'Last Order', 'Status'];
+    const rows = customers.map((c) => [c.id, c.company, c.contact, c.phone, c.creditLimit, c.outstanding, c.lastOrder, c.status]);
+    exportToExcel('customer_credit_ledger_2026', headers, rows);
+    addToast('Customer ledger exported to Excel (CSV)', 'success');
+  };
+
+  const handleExportPDF = () => {
+    const headers = ['Account Code', 'Company', 'Contact', 'Phone', 'Credit Limit (£)', 'Outstanding (£)', 'Last Order', 'Status'];
+    const rows = customers.map((c) => [c.id, c.company, c.contact, c.phone, `£${c.creditLimit}`, `£${c.outstanding}`, c.lastOrder, c.status]);
+    exportToPDF('Customer Credit Ledger Report', headers, rows);
+    addToast('Customer ledger PDF generated', 'success');
+  };
 
   const totalOutstanding = customers.reduce((sum, c) => sum + c.outstanding, 0);
   const overdueAccounts = customers.filter((c) => c.status === 'overdue').length;
@@ -121,6 +170,31 @@ export default function CustomersPage() {
       header: 'Status',
       render: (row) => <StatusBadge status={row.status} />,
     },
+    {
+      key: 'actions',
+      header: 'Actions',
+      align: 'right',
+      render: (row) => (
+        <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+          <button
+            onClick={() => setEditingCustomer(row)}
+            className="p-1.5 rounded-lg bg-navy-700/60 hover:bg-navy-600 text-accent-blue-light hover:text-white transition-colors"
+            title="Edit Customer"
+          >
+            <Edit2 className="w-3.5 h-3.5" />
+          </button>
+          {user?.role === 'Administrator' && (
+            <button
+              onClick={() => handleDeleteCustomer(row)}
+              className="p-1.5 rounded-lg bg-navy-700/60 hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 transition-colors"
+              title="Delete Customer"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+      ),
+    },
   ];
 
   return (
@@ -133,18 +207,24 @@ export default function CustomersPage() {
             <Button
               variant="secondary"
               size="sm"
-              icon={<Download className="w-4 h-4" />}
-              onClick={() => addToast('Customer data exported', 'success')}
+              icon={<FileSpreadsheet className="w-4 h-4 text-emerald-400" />}
+              onClick={handleExportExcel}
             >
-              Export
+              Export Excel
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={<FileText className="w-4 h-4 text-rose-400" />}
+              onClick={handleExportPDF}
+            >
+              Export PDF
             </Button>
             <Button
               variant="primary"
               size="sm"
               icon={<Plus className="w-4 h-4" />}
-              onClick={() =>
-                addToast('Add customer form coming in Phase 2', 'info')
-              }
+              onClick={() => setIsAddModalOpen(true)}
             >
               Add Customer
             </Button>
@@ -205,14 +285,14 @@ export default function CustomersPage() {
           <h3 className="text-sm font-semibold text-text-primary">
             Customer Credit Ledger
           </h3>
-          <Button
-            variant="ghost"
-            size="sm"
-            icon={<Download className="w-3.5 h-3.5" />}
-            onClick={() => addToast('Ledger exported', 'success')}
-          >
-            Export
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" icon={<FileSpreadsheet className="w-3.5 h-3.5" />} onClick={handleExportExcel}>
+              Excel
+            </Button>
+            <Button variant="ghost" size="sm" icon={<FileText className="w-3.5 h-3.5" />} onClick={handleExportPDF}>
+              PDF
+            </Button>
+          </div>
         </div>
         <div className="p-5 pt-3">
           <DataTable
@@ -229,6 +309,20 @@ export default function CustomersPage() {
         customer={selectedCustomer}
         isOpen={!!selectedCustomer}
         onClose={() => setSelectedCustomer(null)}
+        onPaymentSuccess={fetchCustomers}
+      />
+
+      <AddCustomerModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onSuccess={fetchCustomers}
+      />
+
+      <EditCustomerModal
+        isOpen={!!editingCustomer}
+        customer={editingCustomer}
+        onClose={() => setEditingCustomer(null)}
+        onSuccess={fetchCustomers}
       />
     </div>
   );

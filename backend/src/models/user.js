@@ -6,7 +6,7 @@ module.exports = (sequelize, DataTypes) => {
     }
   }
   User.init({
-    full_name: { type: DataTypes.STRING, allowNull: false }, email: { type: DataTypes.STRING, allowNull: false, unique: true }, password_hash: { type: DataTypes.STRING, allowNull: false }, role_id: { type: DataTypes.INTEGER, references: { model: 'roles', key: 'id' } }, avatar_url: { type: DataTypes.STRING }, is_active: { type: DataTypes.BOOLEAN, defaultValue: true }, last_login_at: { type: DataTypes.DATE }
+    full_name: { type: DataTypes.STRING, allowNull: false }, email: { type: DataTypes.STRING, allowNull: false, unique: true }, password_hash: { type: DataTypes.STRING, allowNull: false }, role_id: { type: DataTypes.INTEGER, references: { model: 'Roles', key: 'id' } }, avatar_url: { type: DataTypes.STRING }, is_active: { type: DataTypes.BOOLEAN, defaultValue: true }, last_login_at: { type: DataTypes.DATE }
   }, {
     sequelize,
     modelName: 'User',
