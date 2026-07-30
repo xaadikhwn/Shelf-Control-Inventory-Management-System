@@ -30,6 +30,7 @@ export default function Sidebar() {
   const { user, logout } = useAuth();
   const { sidebarOpen, setSidebarOpen } = useUI();
   const location = useLocation();
+  const safeUser = user ?? { name: 'User', role: 'Staff', initials: 'US', studentId: 'N/A' };
 
   const isActive = (path: string) => {
     if (path === '/') return location.pathname === '/';
@@ -55,16 +56,16 @@ export default function Sidebar() {
       <div className="px-4 py-3 mx-3 mb-4 bg-navy-700/40 rounded-lg">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-accent-blue/20 rounded-full flex items-center justify-center text-xs font-bold text-accent-blue">
-            {user?.initials || 'US'}
+            {safeUser.initials}
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-text-primary truncate">
-              {user?.name || 'User'}
+              {safeUser.name}
             </p>
             <div className="flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
               <span className="text-[10px] text-accent-blue-light">
-                {user?.role || 'Staff'}
+                {safeUser.role}
               </span>
             </div>
           </div>
@@ -136,7 +137,7 @@ export default function Sidebar() {
         <p className="px-3 pt-2 text-[9px] font-mono text-text-muted leading-relaxed">
           JWT · Session active · ID:
           <br />
-          {user?.studentId || 'N/A'}
+          {safeUser.studentId}
         </p>
       </div>
     </div>
