@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import type { LucideIcon } from 'lucide-react';
+import { TrendingUp, TrendingDown, ArrowRight } from 'lucide-react';
 
 interface KpiCardProps {
   label: string;
@@ -41,12 +42,12 @@ export default function KpiCard({
   const getTrendIcon = () => {
     switch (trend?.type) {
       case 'up':
-        return '↗';
+        return <TrendingUp className="w-3.5 h-3.5" />;
       case 'down':
       case 'warning':
-        return '↘';
+        return <TrendingDown className="w-3.5 h-3.5" />;
       default:
-        return '→';
+        return <ArrowRight className="w-3.5 h-3.5 opacity-80" />;
     }
   };
 
@@ -76,9 +77,10 @@ export default function KpiCard({
 
       {/* Trend line */}
       {trend && (
-        <p className={`text-xs font-medium mt-1 ${getTrendColor()}`}>
-          {getTrendIcon()} {trend.text}
-        </p>
+        <div className={`flex items-center gap-2 text-xs font-medium mt-1 ${getTrendColor()}`}>
+          {getTrendIcon()}
+          <span>{trend.text}</span>
+        </div>
       )}
     </div>
   );

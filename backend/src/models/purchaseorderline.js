@@ -6,7 +6,7 @@ module.exports = (sequelize, DataTypes) => {
     }
   }
   PurchaseOrderLine.init({
-    purchase_order_id: { type: DataTypes.INTEGER, allowNull: false, references: { model: 'purchase_orders', key: 'id' } }, product_id: { type: DataTypes.INTEGER, allowNull: false, references: { model: 'products', key: 'id' } }, quantity: { type: DataTypes.INTEGER, allowNull: false }, unit_cost: { type: DataTypes.DECIMAL(10, 2), allowNull: false }, line_total: { type: DataTypes.DECIMAL(10, 2), allowNull: false }
+    purchase_order_id: { type: DataTypes.INTEGER, allowNull: false, references: { model: 'PurchaseOrders', key: 'id' } }, product_id: { type: DataTypes.INTEGER, allowNull: false, references: { model: 'Products', key: 'id' } }, quantity: { type: DataTypes.INTEGER, allowNull: false }, unit_cost: { type: DataTypes.DECIMAL(10, 2), allowNull: false }, line_total: { type: DataTypes.DECIMAL(10, 2), allowNull: false }
   }, {
     sequelize,
     modelName: 'PurchaseOrderLine',

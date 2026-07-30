@@ -80,28 +80,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (credentials: any) => {
     const res = await authApi.login(credentials);
-    if (res.success) {
-      const token = res.data?.accessToken;
-      if (token) {
-        setAccessToken(token);
-      }
-      const userData = res.data?.user || res.data;
-      setUser(mapUser(userData));
-      toast.success('Successfully logged in!');
+    if (!res?.success) {
+      throw new Error(res?.error?.message || 'Login failed');
     }
+
+    const token = res.data?.accessToken;
+    if (token) {
+      setAccessToken(token);
+    }
+    const userData = res.data?.user || res.data;
+    setUser(mapUser(userData));
+    toast.success('Successfully logged in!');
   };
 
   const registerUser = async (data: any) => {
     const res = await authApi.register(data);
-    if (res.success) {
-      const token = res.data?.accessToken;
-      if (token) {
-        setAccessToken(token);
-      }
-      const userData = res.data?.user || res.data;
-      setUser(mapUser(userData));
-      toast.success('Successfully registered!');
+    if (!res?.success) {
+      throw new Error(res?.error?.message || 'Registration failed');
     }
+
+    const token = res.data?.accessToken;
+    if (token) {
+      setAccessToken(token);
+    }
+    const userData = res.data?.user || res.data;
+    setUser(mapUser(userData));
+    toast.success('Successfully registered!');
   };
 
   const logout = useCallback(async () => {

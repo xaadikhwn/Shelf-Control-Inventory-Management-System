@@ -6,7 +6,7 @@ module.exports = (sequelize, DataTypes) => {
     }
   }
   PurchaseOrder.init({
-    order_code: { type: DataTypes.STRING, allowNull: false, unique: true }, supplier_id: { type: DataTypes.INTEGER, allowNull: false, references: { model: 'suppliers', key: 'id' } }, order_date: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW }, total_amount: { type: DataTypes.DECIMAL(10, 2), allowNull: false }, status: { type: DataTypes.ENUM('pending', 'received', 'cancelled'), defaultValue: 'pending' }, created_by: { type: DataTypes.INTEGER, allowNull: false, references: { model: 'users', key: 'id' } }
+    order_code: { type: DataTypes.STRING, allowNull: false, unique: true }, supplier_id: { type: DataTypes.INTEGER, allowNull: false, references: { model: 'Suppliers', key: 'id' } }, order_date: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW }, total_amount: { type: DataTypes.DECIMAL(10, 2), allowNull: false }, status: { type: DataTypes.ENUM('pending', 'received', 'cancelled'), defaultValue: 'pending' }, created_by: { type: DataTypes.INTEGER, allowNull: false, references: { model: 'Users', key: 'id' } }
   }, {
     sequelize,
     modelName: 'PurchaseOrder',

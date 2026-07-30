@@ -7,11 +7,19 @@ const cookieParser = require('cookie-parser');
 const { errorHandler } = require('./middleware/errorHandler');
 
 const app = express();
+const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173,http://127.0.0.1:3000').split(',').map((origin) => origin.trim()).filter(Boolean);
 
 // Middlewares
 app.use(helmet());
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.vercel.app') || origin.startsWith('http://localhost') || origin.startsWith('http://127.0.0.1')) {
+      callback(null, true);
+      return;
+    }
+
+    callback(new Error('CORS policy blocked this request'));
+  },
   credentials: true
 }));
 app.use(express.json());
@@ -30,7 +38,7 @@ app.use('/api/customers', require('./routes/customers.routes'));
 app.use('/api/suppliers', require('./routes/suppliers.routes'));
 app.use('/api/users', require('./routes/users.routes'));
 
-app.get('/health', (req, res) => res.json({ success: true, message: 'API is running' }));
+app.get(['/health', '/api/health'], (req, res) => res.json({ success: true, message: 'API is running' }));
 
 // Global error handler
 app.use(errorHandler);

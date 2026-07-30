@@ -6,7 +6,7 @@ module.exports = (sequelize, DataTypes) => {
     }
   }
   PayrollEntry.init({
-    payroll_run_id: { type: DataTypes.INTEGER, allowNull: false, references: { model: 'payroll_runs', key: 'id' } }, employee_id: { type: DataTypes.INTEGER, allowNull: false, references: { model: 'employees', key: 'id' } }, gross: { type: DataTypes.DECIMAL(10, 2), allowNull: false }, deductions: { type: DataTypes.DECIMAL(10, 2), allowNull: false, defaultValue: 0 }, net_pay: { type: DataTypes.DECIMAL(10, 2), allowNull: false }, pay_date: { type: DataTypes.DATE }, status: { type: DataTypes.ENUM('paid', 'pending'), defaultValue: 'pending' }
+    payroll_run_id: { type: DataTypes.INTEGER, allowNull: false, references: { model: 'PayrollRuns', key: 'id' } }, employee_id: { type: DataTypes.INTEGER, allowNull: false, references: { model: 'Employees', key: 'id' } }, gross: { type: DataTypes.DECIMAL(10, 2), allowNull: false }, deductions: { type: DataTypes.DECIMAL(10, 2), allowNull: false, defaultValue: 0 }, net_pay: { type: DataTypes.DECIMAL(10, 2), allowNull: false }, pay_date: { type: DataTypes.DATE }, status: { type: DataTypes.ENUM('paid', 'pending'), defaultValue: 'pending' }
   }, {
     sequelize,
     modelName: 'PayrollEntry',

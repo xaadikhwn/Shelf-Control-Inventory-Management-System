@@ -105,27 +105,32 @@ export default function Sidebar() {
       </div>
 
       {/* Bottom items */}
-      <div className="px-3 pb-3 pt-2 border-t border-navy-500/30 mt-auto">
-        <NavLink
-          to="/settings"
-          onClick={() => setSidebarOpen(false)}
-          className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
-            isActive('/settings')
-              ? 'bg-accent-blue/10 text-accent-blue-light'
-              : 'text-text-secondary hover:bg-navy-700/50 hover:text-text-primary'
-          }`}
-        >
-          <SlidersHorizontal className="w-[18px] h-[18px]" />
-          <span>Settings</span>
-        </NavLink>
-        <button
-          onClick={logout}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-text-secondary hover:bg-navy-700/50 hover:text-text-primary transition-all duration-200 w-full"
-          aria-label="Sign out"
-        >
-          <LogOut className="w-[18px] h-[18px]" />
-          <span>Sign Out</span>
-        </button>
+      <div className="px-3 pb-3 pt-2 border-t border-navy-500/30 mt-auto space-y-2">
+        <div className="flex flex-col gap-2">
+          <NavLink
+            to="/settings"
+            onClick={() => setSidebarOpen(false)}
+            className={`flex items-center gap-2 rounded-lg px-3 py-2.5 transition-all duration-200 ${
+              isActive('/settings')
+                ? 'bg-accent-blue/10 text-accent-blue-light'
+                : 'text-text-secondary hover:bg-navy-700/50 hover:text-text-primary'
+            }`}
+            aria-label="Settings"
+            title="Settings"
+          >
+            <SlidersHorizontal className="w-[18px] h-[18px]" />
+            <span className="text-sm font-medium">Settings</span>
+          </NavLink>
+          <button
+            onClick={logout}
+            className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-text-secondary hover:bg-navy-700/50 hover:text-text-primary transition-all duration-200"
+            aria-label="Sign out"
+            title="Sign out"
+          >
+            <LogOut className="w-[18px] h-[18px]" />
+            <span className="text-sm font-medium">Sign out</span>
+          </button>
+        </div>
 
         {/* Session footer */}
         <p className="px-3 pt-2 text-[9px] font-mono text-text-muted leading-relaxed">

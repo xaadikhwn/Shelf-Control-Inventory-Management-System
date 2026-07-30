@@ -6,7 +6,7 @@ module.exports = (sequelize, DataTypes) => {
     }
   }
   PasswordResetToken.init({
-    user_id: { type: DataTypes.INTEGER, allowNull: false, references: { model: 'users', key: 'id' } }, token_hash: { type: DataTypes.STRING, allowNull: false }, expires_at: { type: DataTypes.DATE, allowNull: false }, used_at: { type: DataTypes.DATE }
+    user_id: { type: DataTypes.INTEGER, allowNull: false, references: { model: 'Users', key: 'id' } }, token_hash: { type: DataTypes.STRING, allowNull: false }, expires_at: { type: DataTypes.DATE, allowNull: false }, used_at: { type: DataTypes.DATE }
   }, {
     sequelize,
     modelName: 'PasswordResetToken',

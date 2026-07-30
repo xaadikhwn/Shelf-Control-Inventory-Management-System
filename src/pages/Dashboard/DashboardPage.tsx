@@ -9,8 +9,8 @@ import {
   Calendar,
   Layers,
   Activity,
-  CheckCircle2,
   Clock,
+  Database,
 } from 'lucide-react';
 import PageHeader from '../../components/layout/PageHeader';
 import KpiCard from '../../components/ui/KpiCard';
@@ -145,14 +145,20 @@ export default function DashboardPage() {
         subtitle={`Role: ${user?.role || 'Staff'} · System Operational`}
         actions={
           <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-              <Activity className="w-3.5 h-3.5 animate-pulse" />
-              API Connected
-            </span>
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-navy-700/60 text-text-secondary border border-navy-600/40">
-              <CheckCircle2 className="w-3.5 h-3.5 text-accent-blue" />
-              SQLite DB Active
-            </span>
+            <div
+              className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+              aria-label="API Connected"
+              title="API Connected"
+            >
+              <Activity className="w-4 h-4 animate-pulse" />
+            </div>
+            <div
+              className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-navy-700/60 text-text-secondary border border-navy-600/40"
+              aria-label="SQLite DB Active"
+              title="SQLite DB Active"
+            >
+              <Database className="w-4 h-4 text-accent-blue" />
+            </div>
           </div>
         }
       />
@@ -217,14 +223,12 @@ export default function DashboardPage() {
       <div className="bg-navy-800 border border-navy-500/50 rounded-xl">
         <div className="flex items-center justify-between p-5 pb-0">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-accent-blue/10 border border-accent-blue/20 flex items-center justify-center text-accent-blue-light">
-              <ShoppingBag className="w-4 h-4" />
+            <div className="w-10 h-10 rounded-lg bg-accent-blue/10 border border-accent-blue/20 flex items-center justify-center text-accent-blue-light" aria-label="Recent Sales Orders" title="Recent Sales Orders">
+              <ShoppingBag className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-text-primary">
-                Recent Sales Orders
-              </h3>
-              <p className="text-xs text-text-muted">Live transaction history</p>
+              <p className="text-xs uppercase tracking-[0.2em] text-text-muted">Recent Sales</p>
+              <h3 className="text-sm font-semibold text-text-primary">Orders</h3>
             </div>
           </div>
           <span className="inline-flex items-center gap-1.5 text-xs text-text-muted bg-navy-700/50 px-2.5 py-1 rounded-md border border-navy-600/40">

@@ -1,6 +1,38 @@
 require('dotenv').config();
 
-const dialect = process.env.DB_DIALECT || 'sqlite';
+const normalizeDialect = (value) => {
+  if (!value) return undefined;
+  if (value.toLowerCase() === 'tidb') return 'mysql';
+  return value;
+};
+
+const getDialect = () => {
+  if (process.env.DATABASE_URL) {
+    const url = process.env.DATABASE_URL.toLowerCase();
+    if (url.startsWith('mysql://') || url.startsWith('mysql2://')) return 'mysql';
+    if (url.startsWith('postgres://') || url.startsWith('postgresql://')) return 'postgres';
+  }
+
+  const configuredDialect = normalizeDialect(process.env.DB_DIALECT);
+  if (configuredDialect) return configuredDialect;
+
+  return 'sqlite';
+};
+
+const getDialectOptions = () => {
+  if (process.env.DB_SSL === 'true') {
+    return {
+      ssl: {
+        require: true,
+        rejectUnauthorized: false,
+      },
+    };
+  }
+
+  return {};
+};
+
+const dialect = getDialect();
 
 module.exports = {
   development: {
@@ -9,9 +41,10 @@ module.exports = {
     database: process.env.DB_NAME || 'bizmanage',
     host: process.env.DB_HOST || '127.0.0.1',
     port: process.env.DB_PORT || 3306,
-    dialect: dialect,
+    dialect,
     storage: dialect === 'sqlite' ? (process.env.DB_STORAGE || './bizmanage.sqlite') : undefined,
     logging: false,
+    ...(Object.keys(getDialectOptions()).length ? { dialectOptions: getDialectOptions() } : {}),
   },
   test: {
     username: process.env.DB_USER || 'root',
@@ -19,9 +52,10 @@ module.exports = {
     database: process.env.DB_NAME || 'bizmanage_test',
     host: process.env.DB_HOST || '127.0.0.1',
     port: process.env.DB_PORT || 3306,
-    dialect: process.env.DB_DIALECT || 'sqlite',
+    dialect: normalizeDialect(process.env.DB_DIALECT) || getDialect() || 'sqlite',
     storage: process.env.DB_STORAGE || ':memory:',
     logging: false,
+    ...(Object.keys(getDialectOptions()).length ? { dialectOptions: getDialectOptions() } : {}),
   },
   production: {
     username: process.env.DB_USER,
@@ -29,8 +63,10 @@ module.exports = {
     database: process.env.DB_NAME,
     host: process.env.DB_HOST,
     port: process.env.DB_PORT,
-    dialect: process.env.DB_DIALECT || 'mysql',
+    dialect: normalizeDialect(process.env.DB_DIALECT) || getDialect() || 'mysql',
     logging: false,
+    ...(process.env.DATABASE_URL ? { url: process.env.DATABASE_URL } : {}),
+    ...(Object.keys(getDialectOptions()).length ? { dialectOptions: getDialectOptions() } : {}),
   },
 };
 
