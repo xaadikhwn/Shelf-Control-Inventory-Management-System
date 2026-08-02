@@ -3,7 +3,11 @@ const mysql = require('mysql2/promise');
 const app = require('./app');
 const db = require('./models');
 const { startStockAlertCron } = require('./jobs/stockAlert.job');
+<<<<<<< HEAD
 const { autoSeed } = require('./seeders/initSeeder');
+=======
+const { autoSeed } = require('./utils/autoSeed');
+>>>>>>> b0e39f9 (Integration)
 
 const PORT = process.env.PORT || 5000;
 const HOST = process.env.HOST || '0.0.0.0';

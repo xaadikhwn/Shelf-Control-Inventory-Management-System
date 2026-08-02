@@ -57,6 +57,17 @@ export const api = {
   deleteSupplier: async (id: string | number): Promise<void> => {
     await apiClient.delete(`/suppliers/${id}`);
   },
+<<<<<<< HEAD
+=======
+  recordSupplierPayment: async (supplierId: string | number, amount: number) => {
+    const res = await apiClient.post(`/suppliers/${supplierId}/payments`, { amount });
+    return res.data;
+  },
+  recordSupplierPurchase: async (supplierId: string | number, amount: number, reference?: string) => {
+    const res = await apiClient.post(`/suppliers/${supplierId}/purchases`, { amount, reference });
+    return res.data;
+  },
+>>>>>>> b0e39f9 (Integration)
 
   // Products / Inventory
   getProducts: async (): Promise<Product[]> => {

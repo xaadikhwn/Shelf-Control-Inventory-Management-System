@@ -126,10 +126,35 @@ describe('Complete API Endpoint Diagnostic & Hardening Suite', () => {
       .send({ email: adminUser.email });
     expect(res1.status).toBe(200);
 
+<<<<<<< HEAD
     const res2 = await request(app)
       .post('/api/auth/reset-password')
       .send({ token: 'dummy_token', new_password: 'NewPassword123!' });
     expect(res2.status).toBe(200);
+=======
+    // In non-production environments the real reset token is returned so the
+    // flow can be exercised end-to-end without a configured email provider.
+    const realToken = res1.body.devResetToken;
+    expect(realToken).toBeTruthy();
+
+    // A bogus token must be rejected — this is the behaviour that replaced
+    // the old always-succeeds stub.
+    const badRes = await request(app)
+      .post('/api/auth/reset-password')
+      .send({ token: 'dummy_token', new_password: 'NewPassword123!' });
+    expect(badRes.status).toBe(400);
+
+    const res2 = await request(app)
+      .post('/api/auth/reset-password')
+      .send({ token: realToken, new_password: 'NewPassword123!' });
+    expect(res2.status).toBe(200);
+
+    // Restore the admin's original password so later tests in this suite
+    // (and re-runs) that log in as adminUser are unaffected.
+    const bcrypt = require('bcryptjs');
+    const freshHash = await bcrypt.hash('admin123', 12);
+    await db.User.update({ password_hash: freshHash }, { where: { id: adminUser.id } });
+>>>>>>> b0e39f9 (Integration)
   });
 
   // --- DASHBOARD ---

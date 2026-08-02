@@ -9,6 +9,10 @@ import {
   FileText,
   Edit2,
   Trash2,
+<<<<<<< HEAD
+=======
+  Wallet,
+>>>>>>> b0e39f9 (Integration)
 } from 'lucide-react';
 import PageHeader from '../../components/layout/PageHeader';
 import KpiCard from '../../components/ui/KpiCard';
@@ -17,6 +21,10 @@ import StatusBadge from '../../components/ui/StatusBadge';
 import Button from '../../components/ui/Button';
 import AddSupplierModal from './AddSupplierModal';
 import EditSupplierModal from './EditSupplierModal';
+<<<<<<< HEAD
+=======
+import SupplierPaymentModal from './SupplierPaymentModal';
+>>>>>>> b0e39f9 (Integration)
 import { api } from '../../services/api';
 import { formatCurrency } from '../../utils';
 import { exportToExcel, exportToPDF } from '../../utils/exportUtils';
@@ -31,6 +39,10 @@ export default function SuppliersPage() {
   const [loading, setLoading] = useState(true);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
+<<<<<<< HEAD
+=======
+  const [payingSupplier, setPayingSupplier] = useState<Supplier | null>(null);
+>>>>>>> b0e39f9 (Integration)
 
   const fetchSuppliers = async () => {
     setLoading(true);
@@ -143,6 +155,16 @@ export default function SuppliersPage() {
       render: (row) => (
         <div className="flex items-center justify-end gap-2">
           <button
+<<<<<<< HEAD
+=======
+            onClick={() => setPayingSupplier(row)}
+            className="p-1.5 rounded-lg bg-navy-700/60 hover:bg-emerald-500/20 text-emerald-400 hover:text-emerald-300 transition-colors"
+            title="Record Payment / Purchase"
+          >
+            <Wallet className="w-3.5 h-3.5" />
+          </button>
+          <button
+>>>>>>> b0e39f9 (Integration)
             onClick={() => setEditingSupplier(row)}
             className="p-1.5 rounded-lg bg-navy-700/60 hover:bg-navy-600 text-accent-blue-light hover:text-white transition-colors"
             title="Edit Supplier"
@@ -290,6 +312,16 @@ export default function SuppliersPage() {
         onClose={() => setEditingSupplier(null)}
         onSuccess={fetchSuppliers}
       />
+<<<<<<< HEAD
+=======
+
+      <SupplierPaymentModal
+        isOpen={!!payingSupplier}
+        supplier={payingSupplier}
+        onClose={() => setPayingSupplier(null)}
+        onSuccess={fetchSuppliers}
+      />
+>>>>>>> b0e39f9 (Integration)
     </div>
   );
 }

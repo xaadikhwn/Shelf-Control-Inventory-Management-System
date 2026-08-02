@@ -24,5 +24,12 @@ export const authApi = {
   forgotPassword: async (email: string) => {
     const response = await apiClient.post('/auth/forgot-password', { email });
     return response.data;
+<<<<<<< HEAD
+=======
+  },
+  resetPassword: async (token: string, new_password: string) => {
+    const response = await apiClient.post('/auth/reset-password', { token, new_password });
+    return response.data;
+>>>>>>> b0e39f9 (Integration)
   }
 };

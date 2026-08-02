@@ -49,7 +49,18 @@ module.exports = {
   test: {
     username: process.env.DB_USER || 'root',
     password: process.env.DB_PASSWORD || null,
+<<<<<<< HEAD
     database: process.env.DB_NAME || 'bizmanage_test',
+=======
+    // Deliberately IGNORES DB_NAME and always derives a separate, clearly-named
+    // test database. tests/setup.js runs `sequelize.sync({ force: true })` —
+    // a full drop-and-recreate of every table — before every test run. If this
+    // block honoured DB_NAME the way development/production do, a populated
+    // .env (which sets DB_NAME explicitly) would make `npm test` silently wipe
+    // the development or even production database. This must never be able to
+    // resolve to the same database as the other two environments.
+    database: `${(process.env.DB_NAME || 'bizmanage').replace(/_test$/, '')}_test`,
+>>>>>>> b0e39f9 (Integration)
     host: process.env.DB_HOST || '127.0.0.1',
     port: process.env.DB_PORT || 3306,
     dialect: normalizeDialect(process.env.DB_DIALECT) || getDialect() || 'sqlite',

@@ -31,7 +31,11 @@ exports.list = async (req, res, next) => {
     for (const c of rows) {
       const lastEntry = await db.CustomerAccountEntry.findOne({
         where: { customer_id: c.id },
+<<<<<<< HEAD
         order: [['created_at', 'DESC']],
+=======
+        order: [['id', 'DESC']],
+>>>>>>> b0e39f9 (Integration)
       });
       const outstanding = lastEntry ? parseFloat(lastEntry.balance_after) : 0;
       customers.push(formatCustomer(c, outstanding));
@@ -58,7 +62,11 @@ exports.getById = async (req, res, next) => {
 
     const lastEntry = await db.CustomerAccountEntry.findOne({
       where: { customer_id: c.id },
+<<<<<<< HEAD
       order: [['created_at', 'DESC']],
+=======
+      order: [['id', 'DESC']],
+>>>>>>> b0e39f9 (Integration)
     });
     const outstanding = lastEntry ? parseFloat(lastEntry.balance_after) : 0;
 
@@ -171,7 +179,11 @@ exports.update = async (req, res, next) => {
 
     const lastEntry = await db.CustomerAccountEntry.findOne({
       where: { customer_id: customer.id },
+<<<<<<< HEAD
       order: [['created_at', 'DESC']],
+=======
+      order: [['id', 'DESC']],
+>>>>>>> b0e39f9 (Integration)
     });
     const outstanding = lastEntry ? parseFloat(lastEntry.balance_after) : 0;
 
@@ -233,7 +245,11 @@ exports.recordPayment = async (req, res, next) => {
 
     const lastEntry = await db.CustomerAccountEntry.findOne({
       where: { customer_id: customerByCode.id },
+<<<<<<< HEAD
       order: [['created_at', 'DESC']],
+=======
+      order: [['id', 'DESC']],
+>>>>>>> b0e39f9 (Integration)
       transaction: t,
     });
     const currentBalance = lastEntry ? parseFloat(lastEntry.balance_after) : 0;

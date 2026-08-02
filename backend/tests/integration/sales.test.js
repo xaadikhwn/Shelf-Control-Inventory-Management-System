@@ -62,7 +62,11 @@ describe('Sales & Customers Integration', () => {
     expect(alert.quantity_at_trigger).toBe(5);
     
     // Check customer ledger updated correctly
+<<<<<<< HEAD
     const lastEntry = await db.CustomerAccountEntry.findOne({ where: { customer_id: customer.id }, order: [['created_at', 'DESC']] });
+=======
+    const lastEntry = await db.CustomerAccountEntry.findOne({ where: { customer_id: customer.id }, order: [['id', 'DESC']] });
+>>>>>>> b0e39f9 (Integration)
     expect(lastEntry).toBeTruthy();
     expect(parseFloat(lastEntry.amount)).toBe(900); // 45 * 20
     expect(parseFloat(lastEntry.balance_after)).toBe(900);
@@ -78,7 +82,11 @@ describe('Sales & Customers Integration', () => {
 
     expect(res.status).toBe(200);
 
+<<<<<<< HEAD
     const lastEntry = await db.CustomerAccountEntry.findOne({ where: { customer_id: customer.id }, order: [['created_at', 'DESC']] });
+=======
+    const lastEntry = await db.CustomerAccountEntry.findOne({ where: { customer_id: customer.id }, order: [['id', 'DESC']] });
+>>>>>>> b0e39f9 (Integration)
     expect(lastEntry).toBeTruthy();
     expect(parseFloat(lastEntry.amount)).toBe(400);
     expect(parseFloat(lastEntry.balance_after)).toBe(500); // 900 - 400

@@ -1,6 +1,16 @@
 const bcrypt = require('bcryptjs');
 const db = require('../models');
+<<<<<<< HEAD
 const { generateAccessToken, generateRefreshToken, verifyRefreshToken } = require('../utils/tokens');
+=======
+const {
+  generateAccessToken,
+  generateRefreshToken,
+  verifyRefreshToken,
+  hashToken,
+  generatePasswordResetToken,
+} = require('../utils/tokens');
+>>>>>>> b0e39f9 (Integration)
 
 exports.register = async (req, res, next) => {
   try {
@@ -13,17 +23,25 @@ exports.register = async (req, res, next) => {
       return next(err);
     }
 
+<<<<<<< HEAD
     // Check if user already exists
     const allUsers = await db.User.findAll();
     const existingUser = allUsers.find((u) => u.email.toLowerCase() === cleanEmail);
 
+=======
+    const existingUser = await db.User.findOne({ where: { email: cleanEmail } });
+>>>>>>> b0e39f9 (Integration)
     if (existingUser) {
       const err = new Error('Email already registered');
       err.statusCode = 409;
       return next(err);
     }
 
+<<<<<<< HEAD
     const salt = await bcrypt.genSalt(10);
+=======
+    const salt = await bcrypt.genSalt(12);
+>>>>>>> b0e39f9 (Integration)
     const password_hash = await bcrypt.hash(password.trim(), salt);
 
     let assignedRoleId = role_id;
@@ -40,7 +58,11 @@ exports.register = async (req, res, next) => {
       full_name: full_name || cleanEmail.split('@')[0],
       email: cleanEmail,
       password_hash,
+<<<<<<< HEAD
       role_id: assignedRoleId || 3,
+=======
+      role_id: assignedRoleId,
+>>>>>>> b0e39f9 (Integration)
       is_active: true
     });
 
@@ -53,7 +75,11 @@ exports.register = async (req, res, next) => {
 
     await db.RefreshToken.create({
       user_id: user.id,
+<<<<<<< HEAD
       token_hash: refreshToken,
+=======
+      token_hash: hashToken(refreshToken),
+>>>>>>> b0e39f9 (Integration)
       expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
     });
 
@@ -93,12 +119,20 @@ exports.login = async (req, res, next) => {
 
     const cleanInput = email.trim().toLowerCase();
 
+<<<<<<< HEAD
     // 1. Direct email lookup
     let user = await db.User.findOne({
+=======
+    // Exact match only. Do not fuzzy-match by name/partial email, and do not
+    // reveal which part of the credential pair was wrong, or which accounts
+    // exist — both are classic user-enumeration vectors.
+    const user = await db.User.findOne({
+>>>>>>> b0e39f9 (Integration)
       where: { email: cleanInput },
       include: [{ model: db.Role }]
     });
 
+<<<<<<< HEAD
     // 2. Flexible fallback search (e.g., 'admin', 'manager', 'user', 'testadmin', 'alex')
     if (!user) {
       const allUsers = await db.User.findAll({ include: [{ model: db.Role }] });
@@ -129,10 +163,23 @@ exports.login = async (req, res, next) => {
         success: false,
         error: { message: 'User account is inactive. Please contact system administrator.' }
       });
+=======
+    const genericError = () => {
+      res.clearCookie('refreshToken');
+      return res.status(401).json({
+        success: false,
+        error: { code: 'INVALID_CREDENTIALS', message: 'Invalid email or password' }
+      });
+    };
+
+    if (!user || !user.is_active) {
+      return genericError();
+>>>>>>> b0e39f9 (Integration)
     }
 
     const isMatch = await bcrypt.compare(password.trim(), user.password_hash);
     if (!isMatch) {
+<<<<<<< HEAD
       res.clearCookie('refreshToken');
       return res.status(401).json({
         success: false,
@@ -152,6 +199,20 @@ exports.login = async (req, res, next) => {
     });
 
     // Update last login
+=======
+      return genericError();
+    }
+
+    const accessToken = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
+
+    await db.RefreshToken.create({
+      user_id: user.id,
+      token_hash: hashToken(refreshToken),
+      expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+    });
+
+>>>>>>> b0e39f9 (Integration)
     user.last_login_at = new Date();
     await user.save();
 
@@ -184,7 +245,11 @@ exports.logout = async (req, res, next) => {
   try {
     const refreshToken = req.cookies?.refreshToken;
     if (refreshToken) {
+<<<<<<< HEAD
       const tokenRecord = await db.RefreshToken.findOne({ where: { token_hash: refreshToken } });
+=======
+      const tokenRecord = await db.RefreshToken.findOne({ where: { token_hash: hashToken(refreshToken) } });
+>>>>>>> b0e39f9 (Integration)
       if (tokenRecord) {
         tokenRecord.revoked_at = new Date();
         await tokenRecord.save();
@@ -236,9 +301,14 @@ exports.refresh = async (req, res, next) => {
       });
     }
 
+<<<<<<< HEAD
     // Check if token exists in DB and is not revoked
     const tokenRecord = await db.RefreshToken.findOne({
       where: { token_hash: refreshToken }
+=======
+    const tokenRecord = await db.RefreshToken.findOne({
+      where: { token_hash: hashToken(refreshToken) }
+>>>>>>> b0e39f9 (Integration)
     });
 
     if (!tokenRecord || tokenRecord.revoked_at || tokenRecord.expires_at < new Date()) {
@@ -266,7 +336,17 @@ exports.refresh = async (req, res, next) => {
     res.status(200).json({
       success: true,
       data: {
+<<<<<<< HEAD
         accessToken: newAccessToken
+=======
+        accessToken: newAccessToken,
+        user: {
+          id: user.id,
+          full_name: user.full_name,
+          email: user.email,
+          role: user.Role ? user.Role.name : 'User'
+        }
+>>>>>>> b0e39f9 (Integration)
       }
     });
   } catch (error) {
@@ -274,10 +354,99 @@ exports.refresh = async (req, res, next) => {
   }
 };
 
+<<<<<<< HEAD
 exports.forgotPassword = async (req, res, next) => {
   res.status(200).json({ success: true, message: 'Reset link generated' });
 };
 
 exports.resetPassword = async (req, res, next) => {
   res.status(200).json({ success: true, message: 'Password reset successfully' });
+=======
+// Real password-reset flow, backed by the password_reset_tokens table.
+// No email provider is configured in this environment, so in non-production
+// environments the raw token is included in the response and logged
+// server-side so the flow can be exercised end-to-end; in production it is
+// never returned in the response body — it must be emailed out by a
+// configured provider.
+exports.forgotPassword = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    const genericMessage = 'If an account with that email exists, a reset link has been sent.';
+    const cleanEmail = (email || '').trim().toLowerCase();
+
+    const user = await db.User.findOne({ where: { email: cleanEmail } });
+    if (!user) {
+      return res.status(200).json({ success: true, message: genericMessage });
+    }
+
+    const { rawToken, tokenHash } = generatePasswordResetToken();
+    await db.PasswordResetToken.create({
+      user_id: user.id,
+      token_hash: tokenHash,
+      expires_at: new Date(Date.now() + 60 * 60 * 1000),
+    });
+
+    const isProduction = process.env.NODE_ENV === 'production';
+    console.log(`[password-reset] token for ${cleanEmail}: ${rawToken} (expires in 1h)`);
+
+    res.status(200).json({
+      success: true,
+      message: genericMessage,
+      ...(isProduction ? {} : { devResetToken: rawToken }),
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.resetPassword = async (req, res, next) => {
+  const t = await db.sequelize.transaction();
+  try {
+    const { token, new_password } = req.body;
+    if (!token || !new_password) {
+      const err = new Error('Token and new password are required');
+      err.statusCode = 400;
+      throw err;
+    }
+    const tokenHash = hashToken(token);
+
+    const tokenRecord = await db.PasswordResetToken.findOne({
+      where: { token_hash: tokenHash },
+      transaction: t,
+      lock: t.LOCK.UPDATE,
+    });
+
+    if (!tokenRecord || tokenRecord.used_at || tokenRecord.expires_at < new Date()) {
+      const err = new Error('Invalid or expired reset token');
+      err.statusCode = 400;
+      throw err;
+    }
+
+    const user = await db.User.findByPk(tokenRecord.user_id, { transaction: t });
+    if (!user) {
+      const err = new Error('User not found');
+      err.statusCode = 404;
+      throw err;
+    }
+
+    const salt = await bcrypt.genSalt(12);
+    user.password_hash = await bcrypt.hash(new_password, salt);
+    await user.save({ transaction: t });
+
+    tokenRecord.used_at = new Date();
+    await tokenRecord.save({ transaction: t });
+
+    // A password reset should end every other active session.
+    await db.RefreshToken.update(
+      { revoked_at: new Date() },
+      { where: { user_id: user.id, revoked_at: null }, transaction: t }
+    );
+
+    await t.commit();
+    res.status(200).json({ success: true, message: 'Password reset successfully' });
+  } catch (error) {
+    await t.rollback();
+    next(error);
+  }
+>>>>>>> b0e39f9 (Integration)
 };

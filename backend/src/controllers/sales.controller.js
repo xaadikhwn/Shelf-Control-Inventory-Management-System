@@ -144,7 +144,11 @@ exports.create = async (req, res, next) => {
     if (payment_status === 'credit' && targetCustomer) {
       const lastEntry = await db.CustomerAccountEntry.findOne({
         where: { customer_id: targetCustomer.id },
+<<<<<<< HEAD
         order: [['created_at', 'DESC']],
+=======
+        order: [['id', 'DESC']],
+>>>>>>> b0e39f9 (Integration)
         transaction: t,
       });
       const currentBalance = lastEntry ? parseFloat(lastEntry.balance_after) : 0;
