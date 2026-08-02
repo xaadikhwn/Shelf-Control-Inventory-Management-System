@@ -6,6 +6,7 @@ async function generate() {
   const salt = await bcrypt.genSalt(12);
   const passwordHash = await bcrypt.hash('admin123', salt);
 
+
   const roleSeed = [
     "'use strict';",
     "module.exports = {",
