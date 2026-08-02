@@ -48,5 +48,10 @@
     "tailwindcss": "^4.3.2",
     "typescript": "~6.0.2",
     "vite": "^8.1.1"
-  }
+  },
+  "description": "> **Full-stack, production-ready build** — BSc (Hons) Computer Science > Student ID: 100536271 · Supervisor: Miss Eleanor Leist",
+  "main": "index.js",
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
 }
